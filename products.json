@@ -1,0 +1,22 @@
+[
+    {"id": 1, "name": "Wireless Mouse", "price": 599},
+    {"id": 2, "name": "Gaming Keyboard", "price": 1299},
+    {"id": 3, "name": "USB-C Cable", "price": 199},
+    {"id": 4, "name": "Laptop Stand", "price": 999},
+    {"id": 5, "name": "Bluetooth Speaker", "price": 1499},
+    {"id": 6, "name": "Monitor", "price": 4999},
+    {"id": 7, "name": "Headphones", "price": 899},
+    {"id": 8, "name": "Smartphone", "price": 15999},
+    {"id": 9, "name": "Power Bank", "price": 799},
+    {"id": 10, "name": "Webcam", "price": 699},
+    {"id": 11, "name": "External Hard Drive", "price": 2499},
+    {"id": 12, "name": "Wireless Charger", "price": 499},
+    {"id": 13, "name": "Tablet", "price": 12999},
+    {"id": 14, "name": "Smartwatch", "price": 2999},
+    {"id": 15, "name": "Printer", "price": 3999},
+    {"id": 16, "name": "Projector", "price": 7999},
+    {"id": 17, "name": "Router", "price": 1299},
+    {"id": 18, "name": "VR Headset", "price": 5999},
+    {"id": 19, "name": "Microphone", "price": 799},
+    {"id": 20, "name": "Camera", "price": 9999}
+] 

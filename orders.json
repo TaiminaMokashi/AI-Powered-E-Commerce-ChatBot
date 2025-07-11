@@ -1,0 +1,92 @@
+[
+  {
+    "order_id": "123456",
+    "status": "Shipped, expected delivery in 2 days"
+  },
+  {
+    "order_id": "654321",
+    "status": "Delivered"
+  },
+  {
+    "order_id": "789012",
+    "status": "Processing"
+  },
+  {
+    "order_id": "722791",
+    "status": "Order placed for Wireless Mouse. Processing."
+  },
+  {
+    "order_id": "258345",
+    "status": "Order placed for USB-C Cable. Processing."
+  },
+  {
+    "order_id": "654581",
+    "status": "Order placed for Printer x1, Projector x1, Tablet x1, Smartwatch x1, Smartphone x1, Power Bank x1, Headphones x1, Graphics Card x1, External Hard Drive x1, Monitor x1. Processing."
+  },
+  {
+    "order_id": "711040",
+    "products": [
+      {
+        "id": 6,
+        "name": "Monitor",
+        "price": 4999,
+        "quantity": 1
+      },
+      {
+        "id": 7,
+        "name": "Headphones",
+        "price": 899,
+        "quantity": 1
+      },
+      {
+        "id": 4,
+        "name": "Laptop Stand",
+        "price": 999,
+        "quantity": 1
+      }
+    ],
+    "status": "Order placed successfully! Processing..."
+  },
+  {
+    "order_id": "983391",
+    "products": [
+      {
+        "id": 6,
+        "name": "Monitor",
+        "price": 4999,
+        "quantity": 1
+      },
+      {
+        "id": 4,
+        "name": "Laptop Stand",
+        "price": 999,
+        "quantity": 1
+      },
+      {
+        "id": 3,
+        "name": "USB-C Cable",
+        "price": 199,
+        "quantity": 1
+      }
+    ],
+    "status": "Order placed successfully! Processing..."
+  },
+  {
+    "order_id": "976534",
+    "products": [
+      {
+        "id": 3,
+        "name": "USB-C Cable",
+        "price": 199,
+        "quantity": 1
+      },
+      {
+        "id": 2,
+        "name": "Gaming Keyboard",
+        "price": 1299,
+        "quantity": 1
+      }
+    ],
+    "status": "Order placed for USB-C Cable, Gaming Keyboard. Expected delivery in 2 days."
+  }
+]

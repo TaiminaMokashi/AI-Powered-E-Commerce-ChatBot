@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Unique E-commerce Chatbot</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="unique-chat-container">
+        <div class="unique-chat-header">
+            <img src="https://img.icons8.com/fluency/48/robot-2.png" class="unique-chat-logo" alt="logo">
+            <span class="unique-chat-title">E-Commerce Chatbot</span>
+        </div>
+        <div class="cart-section" style="margin: 18px 18px 0 18px;">
+            <button class="cart-btn">Cart</button>
+            <ul id="cart-list"></ul>
+        </div>
+        <div id="chat-box" class="unique-chat-box"></div>
+        <div class="unique-order-actions">
+            <form id="order-form" onsubmit="placeCartOrder(event)">
+                <button type="button" id="open-product-list" class="unique-order-btn order-form-btn" onclick="showProductListModal()">Select a product</button>
+                <button type="button" class="unique-order-btn order-form-btn" onclick="addSelectedProduct()">Add Product</button>
+                <button type="submit" class="unique-order-btn order-form-btn">Place Order</button>
+            </form>
+        </div>
+        <div id="product-list-modal" class="product-list-modal" style="display:none;">
+            <div class="product-list-modal-content">
+                <div class="product-list-modal-header">
+                    <span>Select a product</span>
+                    <button onclick="closeProductListModal()" class="close-modal-btn">&times;</button>
+                </div>
+                <div id="product-list-scroll" class="product-list-scroll"></div>
+            </div>
+        </div>
+        <div class="unique-chat-input-area" style="margin-top: 18px;">
+            <input type="text" id="user-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter'){sendMessage();}">
+            <button onclick="sendMessage()" class="unique-send-btn">➤</button>
+        </div>
+    </div>
+    <div id="panda-modal" class="panda-modal" style="display:none;">
+        <div class="panda-modal-content">
+            <div class="panda-msg">Your order is placed!</div>
+            <button onclick="closePandaModal()" class="unique-order-btn">OK</button>
+        </div>
+    </div>
+    <script>
+        let allProducts = [];
+        let cart = [];
+        let selectedProduct = null;
+        const randomImages = [
+            "https://img.icons8.com/color/48/000000/wireless-mouse.png",
+            "https://img.icons8.com/color/48/000000/keyboard.png",
+            "https://img.icons8.com/color/48/000000/usb-c-cable.png",
+            "https://img.icons8.com/color/48/000000/laptop-stand.png",
+            "https://img.icons8.com/color/48/000000/bluetooth-speaker.png",
+            "https://img.icons8.com/color/48/000000/monitor.png",
+            "https://img.icons8.com/color/48/000000/headphones.png",
+            "https://img.icons8.com/color/48/000000/smartphone-tablet.png",
+            "https://img.icons8.com/color/48/000000/power-bank.png",
+            "https://img.icons8.com/color/48/000000/webcam.png"
+        ];
+        function getTimeString() {
+            const now = new Date();
+            return now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+        function addMessage(message, sender) {
+            const chatBox = document.getElementById("chat-box");
+            // Create chat row
+            const rowDiv = document.createElement('div');
+            rowDiv.className = sender === 'user' ? 'chat-row user' : 'chat-row bot';
+            // Avatar
+            const avatar = document.createElement('img');
+            avatar.className = 'unique-avatar';
+            avatar.src = sender === 'user' ? 'https://img.icons8.com/color/36/000000/user-male-circle--v2.png' : 'https://img.icons8.com/fluency/36/robot-2.png';
+            avatar.alt = sender === 'user' ? 'User' : 'Bot';
+            // Bubble
+            const msgDiv = document.createElement('div');
+            msgDiv.className = sender === 'user' ? 'unique-bubble user' : 'unique-bubble bot';
+            // Message content
+            const content = document.createElement('div');
+            content.className = 'unique-msg-content';
+            content.innerHTML = message;
+            msgDiv.appendChild(content);
+            // Compose row
+            if (sender === 'user') {
+                rowDiv.appendChild(msgDiv);
+                rowDiv.appendChild(avatar);
+            } else {
+                rowDiv.appendChild(avatar);
+                rowDiv.appendChild(msgDiv);
+            }
+            // Timestamp (below bubble)
+            const time = document.createElement('div');
+            time.className = 'unique-msg-time';
+            time.innerText = getTimeString();
+            time.style.margin = sender === 'user' ? '0 0 0 auto' : '0 auto 0 0';
+            time.style.width = 'fit-content';
+            // Add to chat
+            chatBox.appendChild(rowDiv);
+            chatBox.appendChild(time);
+            // Animation
+            rowDiv.style.opacity = 0;
+            time.style.opacity = 0;
+            setTimeout(() => { 
+                rowDiv.style.opacity = 1; 
+                time.style.opacity = 1;
+                requestAnimationFrame(() => {
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                });
+            }, 50);
+        }
+        function sendMessage() {
+            let input = document.getElementById("user-input");
+            let message = input.value;
+            if (message.trim() === "") return;
+            addMessage(message, 'user');
+            fetch('/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message})
+            })
+            .then(res => res.json())
+            .then(data => {
+                addMessage(data.reply, 'bot');
+            });
+            input.value = "";
+        }
+        function updateCartUI() {
+            const cartList = document.getElementById('cart-list');
+            cartList.innerHTML = '';
+            cart.forEach((p, i) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <b>${p.name}</b> ($${p.price})
+                    <input type="number" min="1" value="${p.quantity || 1}" style="width:48px;margin:0 8px;" onchange="updateQuantity(${i}, this.value)">
+                    x${p.quantity || 1}
+                    <button onclick="removeFromCart(${i})" style="margin-left:8px;">❌</button>
+                `;
+                cartList.appendChild(li);
+            });
+        }
+        function updateQuantity(index, value) {
+            cart[index].quantity = parseInt(value) || 1;
+            updateCartUI();
+        }
+        function addSelectedProduct() {
+            if (!selectedProduct) return;
+            cart.push({ ...selectedProduct, quantity: 1, image: selectedProduct.image });
+            updateCartUI();
+            selectedProduct = null;
+            document.getElementById('open-product-list').innerText = 'Select a product';
+        }
+        function addRandomProduct() {
+            if (allProducts.length === 0) return;
+            const randomProduct = allProducts[Math.floor(Math.random() * allProducts.length)];
+            cart.push({ ...randomProduct, quantity: 1, image: randomProduct.image });
+            updateCartUI();
+        }
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+        }
+        function placeCartOrder(event) {
+            event.preventDefault();
+            if (cart.length === 0) return;
+            fetch('/create_order', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({products: cart})
+            })
+            .then(res => res.json())
+            .then(data => {
+                addMessage(
+                    `Order placed for:<br>` +
+                    data.products.map(p =>
+                        `${p.name} x${p.quantity || 1} ($${p.price})`
+                    ).join('<br>') +
+                    `<br>Order ID: <span class='unique-order-id'>${data.order_id}</span><br>Status: ${data.status}`
+                , 'bot');
+                cart = [];
+                updateCartUI();
+                showPandaModal();
+            });
+        }
+        function showPandaModal() {
+            document.getElementById('panda-modal').style.display = 'flex';
+        }
+        function closePandaModal() {
+            document.getElementById('panda-modal').style.display = 'none';
+        }
+        function showProductListModal() {
+            const modal = document.getElementById('product-list-modal');
+            const list = document.getElementById('product-list-scroll');
+            list.innerHTML = '';
+            allProducts.forEach((p, i) => {
+                const item = document.createElement('div');
+                item.className = 'product-list-item';
+                item.innerHTML = `<b>${p.name}</b> <span style='color:#6366f1;'>₹${p.price}</span>`;
+                item.onclick = function() {
+                    selectedProduct = p;
+                    closeProductListModal();
+                    document.getElementById('open-product-list').innerText = p.name;
+                };
+                list.appendChild(item);
+            });
+            modal.style.display = 'flex';
+        }
+        function closeProductListModal() {
+            document.getElementById('product-list-modal').style.display = 'none';
+        }
+        window.onload = function() {
+            fetch('/products')
+                .then(res => res.json())
+                .then(data => {
+                    allProducts = data.products;
+                    updateCartUI();
+                });
+            document.getElementById('open-product-list').onclick = function() {
+                showProductListModal();
+            };
+        }
+    </script>
+    <style>
+    .panda-modal {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    .panda-modal-content {
+        background: #fff;
+        border-radius: 18px;
+        padding: 32px 36px 24px 36px;
+        box-shadow: 0 4px 32px rgba(99,102,241,0.18);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 260px;
+        animation: popIn 0.3s cubic-bezier(.68,-0.55,.27,1.55);
+    }
+    .panda-img {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 18px;
+    }
+    .panda-msg {
+        font-size: 1.2em;
+        font-weight: 600;
+        color: #6366f1;
+        margin-bottom: 18px;
+        text-align: center;
+    }
+    @keyframes popIn {
+        0% { transform: scale(0.7); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .unique-chat-box {
+        height: 320px;
+        max-height: 320px;
+        overflow-y: scroll;
+        overflow-x: hidden;
+        padding-right: 8px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        background: #f8fafc;
+        border-radius: 18px;
+        box-shadow: 0 2px 16px rgba(99,102,241,0.08);
+    }
+    .unique-chat-box::-webkit-scrollbar {
+        width: 8px;
+        background: #e0e7ff;
+    }
+    .unique-chat-box::-webkit-scrollbar-thumb {
+        background: #a5b4fc;
+        border-radius: 4px;
+    }
+    #product-select {
+        max-height: 160px;
+        overflow-y: auto;
+        border-radius: 8px;
+        padding: 6px 8px;
+        font-size: 1em;
+        background: #f1f5f9;
+        border: 1px solid #a5b4fc;
+        box-shadow: 0 1px 4px rgba(99,102,241,0.06);
+    }
+    .product-list-modal {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.18);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+    }
+    .product-list-modal-content {
+        background: #fff;
+        border-radius: 16px;
+        padding: 18px 0 0 0;
+        min-width: 320px;
+        max-width: 90vw;
+        box-shadow: 0 4px 32px rgba(99,102,241,0.18);
+        display: flex;
+        flex-direction: column;
+        max-height: 400px;
+    }
+    .product-list-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 18px 12px 18px;
+        font-size: 1.1em;
+        font-weight: 600;
+        color: #6366f1;
+    }
+    .close-modal-btn {
+        background: none;
+        border: none;
+        font-size: 1.5em;
+        color: #6366f1;
+        cursor: pointer;
+    }
+    .product-list-scroll {
+        overflow-y: auto;
+        max-height: 320px;
+        min-height: 120px;
+        padding: 0 18px 18px 18px;
+    }
+    .product-list-item {
+        padding: 10px 0;
+        border-bottom: 1px solid #e0e7ff;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .product-list-item:last-child {
+        border-bottom: none;
+    }
+    .product-list-item:hover {
+        background: #f1f5ff;
+    }
+    .unique-bubble.bot {
+        margin-right: auto;
+        background: #e0e7ff; /* Use a single, light blue color */
+        color: #222;
+        border-radius: 18px 18px 18px 8px;
+        box-shadow: 0 2px 12px 0 rgba(99,102,241,0.08);
+    }
+    .chat-row {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+    .chat-row.user {
+        flex-direction: row-reverse;
+    }
+    .chat-row.bot {
+        flex-direction: row;
+    }
+    .unique-bubble {
+        padding: 12px 16px;
+        border-radius: 18px;
+        max-width: 80%;
+        word-wrap: break-word;
+        position: relative;
+    }
+    .unique-bubble.user {
+        background: #e0e7ff;
+        color: #222;
+        border-radius: 18px 18px 8px 18px;
+        box-shadow: 0 2px 12px 0 rgba(99,102,241,0.08);
+    }
+    .unique-bubble.bot {
+        background: #f1f5ff;
+        color: #222;
+        border-radius: 18px 18px 18px 8px;
+        box-shadow: 0 2px 12px 0 rgba(99,102,241,0.08);
+    }
+    .unique-msg-time {
+        font-size: 0.8em;
+        color: #6b7280;
+        margin-top: 4px;
+        opacity: 0;
+        transition: opacity 0.2s ease-in-out;
+    }
+    .cart-btn {
+        background: linear-gradient(90deg, #34d399 0%, #38b6ff 100%);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 4px 16px;
+        font-size: 0.98em;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(56,182,255,0.10);
+        margin-bottom: 8px;
+        margin-right: 8px;
+        cursor: pointer;
+        transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
+    }
+    .cart-btn:hover {
+        background: linear-gradient(90deg, #10b981 0%, #357ae8 100%);
+        box-shadow: 0 4px 16px rgba(56,182,255,0.18);
+        transform: translateY(-1px) scale(1.03);
+    }
+    </style>
+</body>
+</html>
